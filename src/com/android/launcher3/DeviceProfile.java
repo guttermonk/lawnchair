@@ -1546,6 +1546,9 @@ public class DeviceProfile {
 
         folderLabelTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
         folderChildTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
+        if (mTextFactors.getIconFolderTextSizeFactor() == 0f) {
+            folderFooterHeightPx = 0;
+        }
     }
 
     public void updateInsets(Rect insets) {

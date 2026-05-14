@@ -63,6 +63,7 @@ constructor(
             prefs2.customIconShape.get(),
             prefs2.folderShape.get(),
             prefs2.customFolderShape.get(),
+            prefs2.folderPreviewFollowIconShape.get(),
         ).onEach { verifyIconState() }
             .launchIn(scope)
 
@@ -93,7 +94,11 @@ constructor(
         }
 
         val currentFolderShape: IconShape = try {
-            prefs2.folderShape.firstBlocking()
+            if (prefs2.folderPreviewFollowIconShape.firstBlocking()) {
+                currentAppShape
+            } else {
+                prefs2.folderShape.firstBlocking()
+            }
         } catch (e: Exception) {
             Log.d(TAG, "Error getting folder shape", e)
             IconShape.Circle

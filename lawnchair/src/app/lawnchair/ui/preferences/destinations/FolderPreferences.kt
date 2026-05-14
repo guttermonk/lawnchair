@@ -50,8 +50,15 @@ fun FolderPreferences(
             .firstOrNull { it.value == folderIconShapeAdapter.state.value }
             ?.label?.invoke()
             ?: stringResource(id = R.string.custom)
+        val folderPreviewFollowIconShapeAdapter = prefs2.folderPreviewFollowIconShape.getAdapter()
         PreferenceGroup(heading = stringResource(id = R.string.general_label)) {
             Item {
+                SwitchPreference(
+                    adapter = folderPreviewFollowIconShapeAdapter,
+                    label = stringResource(id = R.string.folder_preview_follow_icon_shape),
+                )
+            }
+            Item("folder_shape", !folderPreviewFollowIconShapeAdapter.state.value) {
                 NavigationActionPreference(
                     label = stringResource(id = R.string.folder_shape_label),
                     destination = GeneralIconShape(ShapeRoute.FOLDER_SHAPE),

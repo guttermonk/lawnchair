@@ -455,6 +455,12 @@ class PreferenceManager2 @Inject constructor(
         onSet = { reloadHelper.reloadGrid() },
     )
 
+    val folderPreviewFollowIconShape = preference(
+        key = booleanPreferencesKey(name = "folder_preview_follow_icon_shape"),
+        defaultValue = context.resources.getBoolean(R.bool.config_default_folder_preview_follow_icon_shape),
+        onSet = { reloadHelper.reloadIcons() },
+    )
+
     val folderPreviewBackgroundOpacity = preference(
         key = floatPreferencesKey(name = "folder_preview_background_opacity"),
         defaultValue = resourceProvider.getFloat(R.dimen.config_default_folder_preview_background_opacity),

@@ -815,6 +815,7 @@
     </plurals>
 
     <!-- Folder settings -->
+    <string name="folder_preview_follow_icon_shape">Follow icon shape</string>
     <string name="folder_preview_bg_opacity_label">Icon preview background opacity</string>
     <string name="folder_bg_opacity_label">Folder background opacity</string>
     <string name="folder_preview_bg_color_label">Icon background color</string>
