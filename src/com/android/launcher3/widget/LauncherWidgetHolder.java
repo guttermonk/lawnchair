@@ -256,7 +256,26 @@ public class LauncherWidgetHolder {
      * @param requestCode The request code
      */
     public void startConfigActivity(@NonNull BaseActivity activity, int widgetId, int requestCode) {
+        startConfigActivity(activity, widgetId, requestCode, 0);
+    }
+
+    /**
+     * Starts the configuration activity for the widget with retry counter
+     *
+     * @param activity    The activity in which to start the configuration page
+     * @param widgetId    The ID of the widget
+     * @param requestCode The request code
+     * @param retryCount  The number of retries attempted
+     */
+    private void startConfigActivity(@NonNull BaseActivity activity, int widgetId,
+            int requestCode, int retryCount) {
         if (!WIDGETS_ENABLED) {
+            sendActionCancelled(activity, requestCode);
+            return;
+        }
+
+        if (retryCount >= 3) {
+            Log.e(this.getClass().getName(), "Too many retries for widget configuration, cancelling");
             sendActionCancelled(activity, requestCode);
             return;
         }
@@ -269,8 +288,16 @@ public class LauncherWidgetHolder {
             Toast.makeText(activity, R.string.activity_not_found, Toast.LENGTH_SHORT).show();
             sendActionCancelled(activity, requestCode);
         } catch (IllegalArgumentException e) {
-            Log.e(this.getClass().getName(), "Failed to start widget configuration", e);
-            sendActionCancelled(activity, requestCode);
+            // Widget ID became invalid, possibly due to two-step configuration in some cases
+            Log.e(this.getClass().getName(),
+                    "Widget ID became invalid during configuration (retry " + retryCount + ")", e);
+            deleteAppWidgetId(widgetId);
+            int newWidgetId = allocateAppWidgetId();
+            if (newWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                startConfigActivity(activity, newWidgetId, requestCode, retryCount + 1);
+            } else {
+                sendActionCancelled(activity, requestCode);
+            }
         }
     }
 

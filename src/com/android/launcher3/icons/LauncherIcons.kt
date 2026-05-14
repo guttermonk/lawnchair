@@ -16,10 +16,17 @@
 package com.android.launcher3.icons
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.Shader
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.os.UserHandle
+import app.lawnchair.icons.shape.PathShapeDelegate
 import com.android.launcher3.Flags
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.dagger.ApplicationContext
@@ -65,6 +72,44 @@ internal constructor(
     override fun getShapePath(drawable: AdaptiveIconDrawable, iconBounds: Rect): Path {
         if (!Flags.enableLauncherIconShapes()) return super.getShapePath(drawable, iconBounds)
         return themeManager.iconShape.getPath(iconBounds)
+    }
+
+    override fun drawAdaptiveIcon(
+        canvas: Canvas,
+        drawable: AdaptiveIconDrawable,
+        shapePath: Path,
+    ) {
+        val iconScale = (themeManager.iconShape as? PathShapeDelegate)?.iconShape?.iconScale ?: 1f
+        if (iconScale == 1f || !Flags.enableLauncherIconShapes()) {
+            super.drawAdaptiveIcon(canvas, drawable, shapePath)
+            return
+        }
+
+        val background = drawable.background
+        val foreground = drawable.foreground
+        if (background == null && foreground == null) {
+            drawable.draw(canvas)
+            return
+        }
+
+        val bounds = drawable.bounds
+        val w = bounds.width()
+        val h = bounds.height()
+
+        val shaderBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        Canvas(shaderBitmap).apply {
+            translate(-bounds.left.toFloat(), -bounds.top.toFloat())
+            drawColor(Color.BLACK)
+            save()
+            scale(iconScale, iconScale, w / 2f, h / 2f)
+            background?.draw(this)
+            foreground?.draw(this)
+            restore()
+        }
+
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.shader = BitmapShader(shaderBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+        canvas.drawPath(shapePath, paint)
     }
 
     override fun close() {
