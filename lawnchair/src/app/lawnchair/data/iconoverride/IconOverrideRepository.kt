@@ -66,8 +66,7 @@ class IconOverrideRepository @Inject constructor(
 
     private fun updatePackageIcons(target: ComponentKey) {
         val model = LauncherAppState.INSTANCE.get(context).model
-
-        model.onPackageIconsUpdated(hashSetOf(target.componentName.packageName), target.user)
+        model.onAppIconChanged(target.componentName.packageName, target.user)
     }
 
     override fun close() {

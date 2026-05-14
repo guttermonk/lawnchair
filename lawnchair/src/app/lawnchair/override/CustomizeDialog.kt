@@ -22,8 +22,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.lawnchair.data.iconoverride.IconOverrideRepository
+import app.lawnchair.icons.iconpack.IconPackProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -147,6 +153,22 @@ fun CustomizeAppDialog(
     }
     val launcherAppState = LauncherAppState.getInstance(context)
 
+    val overrideRepo = remember { IconOverrideRepository.INSTANCE.get(context) }
+    val iconPackProvider = remember { IconPackProvider.INSTANCE.get(context) }
+    val overrideEntry by overrideRepo.observeTarget(componentKey).collectAsStateWithLifecycle(initialValue = null)
+    val currentIcon by produceState<Drawable>(initialValue = icon, key1 = overrideEntry) {
+        value = if (overrideEntry == null) {
+            icon
+        } else {
+            withContext(Dispatchers.IO) {
+                val item = overrideEntry!!.iconPickerItem
+                val pack = iconPackProvider.getIconPack(item.packPackageName)
+                pack?.load()
+                pack?.getIcon(item.toIconEntry(), 0) ?: icon
+            }
+        }
+    }
+
     val route = SelectIcon(componentKey.toString())
 
     Log.d("CustomizeDialog", route.toString())
@@ -169,7 +191,7 @@ fun CustomizeAppDialog(
         }
     }
     CustomizeDialog(
-        icon = icon,
+        icon = currentIcon,
         title = title,
         onTitleChange = { title = it },
         defaultTitle = defaultTitle,
