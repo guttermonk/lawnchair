@@ -277,6 +277,7 @@
 
     <string name="show_labels">Show labels</string>
     <string name="label_size">Label size</string>
+    <string name="home_screen_icon_vertical_offset">Icon vertical position</string>
     <string name="twoline_label">Use multiple lines</string>
 
     <!-- Icon-related settings -->
@@ -300,6 +301,7 @@
     <!-- Icon picker -->
     <string name="icon_picker_default_category">Icons</string>
     <string name="icon_picker_reset_to_default">Reset to default</string>
+    <string name="icon_picker_suggested">Suggested</string>
     <string name="icon_pack_external_picker">Open external picker</string>
     <string name="pick_icon_from_label">Pick icon from</string>
     <string name="icon_picker_load_failed">Couldn\'t load more icons</string>

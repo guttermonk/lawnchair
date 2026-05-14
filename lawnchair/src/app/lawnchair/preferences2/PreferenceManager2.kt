@@ -455,6 +455,12 @@ class PreferenceManager2 @Inject constructor(
         onSet = { reloadHelper.reloadGrid() },
     )
 
+    val homeScreenIconVerticalOffset = preference(
+        key = floatPreferencesKey(name = "home_screen_icon_vertical_offset"),
+        defaultValue = resourceProvider.getFloat(R.dimen.config_default_home_screen_icon_vertical_offset),
+        onSet = { reloadHelper.reloadGrid() },
+    )
+
     val folderPreviewFollowIconShape = preference(
         key = booleanPreferencesKey(name = "folder_preview_follow_icon_shape"),
         defaultValue = context.resources.getBoolean(R.bool.config_default_folder_preview_follow_icon_shape),

@@ -63,6 +63,8 @@ class DeviceProfileOverrides @Inject constructor(
     )
 
     fun getTextFactors() = TextFactors(preferenceManager2)
+
+    fun getIconVerticalOffset(): Float = preferenceManager2.homeScreenIconVerticalOffset.firstBlocking()
     override fun close() {
         TODO("Not yet implemented")
     }

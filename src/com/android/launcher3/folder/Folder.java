@@ -330,7 +330,9 @@ public class Folder extends AbstractFloatingView implements ClipPathView, DragSo
         mBackground.setAlpha(alpha);
 
         mContent = findViewById(R.id.folder_content);
-        mContent.setPadding(paddingLeftRight, dp.folderContentPaddingTop, paddingLeftRight, 0);
+        final int topPadding = dp.folderFooterHeightPx == 0 ? paddingLeftRight : dp.folderContentPaddingTop;
+        final int bottomPadding = dp.folderFooterHeightPx == 0 ? paddingLeftRight : 0;
+        mContent.setPadding(paddingLeftRight, topPadding, paddingLeftRight, bottomPadding);
         mContent.setFolder(this);
 
         mPageIndicator = findViewById(R.id.folder_page_indicator);

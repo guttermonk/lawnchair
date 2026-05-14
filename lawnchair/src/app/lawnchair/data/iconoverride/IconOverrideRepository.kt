@@ -10,7 +10,6 @@ import com.android.launcher3.dagger.LauncherAppSingleton
 import com.android.launcher3.util.ComponentKey
 import com.android.launcher3.util.DaggerSingletonObject
 import com.android.launcher3.util.SafeCloseable
-import java.util.concurrent.ConcurrentLinkedQueue
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +28,6 @@ class IconOverrideRepository @Inject constructor(
     private var _overridesMap = mapOf<ComponentKey, IconPickerItem>()
     val overridesMap get() = _overridesMap
 
-    private val updatePackageQueue = ConcurrentLinkedQueue<ComponentKey>()
-
     init {
         scope.launch {
             dao.observeAll()
@@ -40,22 +37,22 @@ class IconOverrideRepository @Inject constructor(
                         keySelector = { it.target },
                         valueTransform = { it.iconPickerItem },
                     )
-                    while (updatePackageQueue.isNotEmpty()) {
-                        val target = updatePackageQueue.poll() ?: continue
-                        updatePackageIcons(target)
-                    }
                 }
         }
     }
 
     suspend fun setOverride(target: ComponentKey, item: IconPickerItem) {
+        // Update in-memory map immediately so icon providers see the change at once
+        _overridesMap = _overridesMap + (target to item)
         dao.insert(IconOverride(target, item))
-        updatePackageQueue.offer(target)
+        updatePackageIcons(target)
     }
 
     suspend fun deleteOverride(target: ComponentKey) {
+        // Update in-memory map immediately
+        _overridesMap = _overridesMap - target
         dao.delete(target)
-        updatePackageQueue.offer(target)
+        updatePackageIcons(target)
     }
 
     fun observeTarget(target: ComponentKey) = dao.observeTarget(target)

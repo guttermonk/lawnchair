@@ -337,6 +337,7 @@ public class DeviceProfile {
     }
 
     private final TextFactors mTextFactors;
+    public float iconVerticalOffsetFactor;
     private float allAppsCellHeightMultiplier;
     private PreferenceManager2 preferenceManager2 = null;
 
@@ -349,6 +350,7 @@ public class DeviceProfile {
             @NonNull final Consumer<DeviceProfile> dimensionOverrideProvider,
             boolean isTransientTaskbar, DisplayOptionSpec displayOptionSpec) {
         mTextFactors = DeviceProfileOverrides.INSTANCE.get(context).getTextFactors();
+        iconVerticalOffsetFactor = DeviceProfileOverrides.INSTANCE.get(context).getIconVerticalOffset();
 
         preferenceManager2 = PreferenceManager2.INSTANCE.get(context);
         allAppsCellHeightMultiplier = PreferenceExtensionsKt
@@ -1484,6 +1486,12 @@ public class DeviceProfile {
             folderLabelTextSizePx = Math.max(minLabelTextSize,
                     (int) (folderChildTextSizePx * folderLabelTextScale));
             maxFolderChildTextLineCount = cellContentDimensions.getMaxLineCount();
+
+            folderLabelTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
+            folderChildTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
+            if (mTextFactors.getIconFolderTextSizeFactor() == 0f) {
+                folderFooterHeightPx = 0;
+            }
             return;
         }
 

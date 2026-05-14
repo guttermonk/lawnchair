@@ -249,6 +249,18 @@ fun HomeScreenPreferences(
                     showAsPercentage = true,
                 )
             }
+            Item(
+                "workspace_icon_vertical_offset",
+                !homeScreenLabelsAdapter.state.value,
+            ) {
+                SliderPreference(
+                    label = stringResource(id = R.string.home_screen_icon_vertical_offset),
+                    adapter = prefs2.homeScreenIconVerticalOffset.getAdapter(),
+                    step = 0.05f,
+                    valueRange = 0f..1f,
+                    showAsPercentage = true,
+                )
+            }
         }
         val overrideRepo = IconOverrideRepository.INSTANCE.get(LocalContext.current)
         val customIconsCount by remember { overrideRepo.observeCount() }.collectAsStateBlocking()
