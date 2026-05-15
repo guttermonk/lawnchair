@@ -1,15 +1,24 @@
-Lawnchair 15 Beta 3 is here!
+Lawnchair v16.0.5
 
-This release contains support for importing backups from Nova Launcher, which currently restores:
+This release establishes consistent APK signing so future updates will
+install without requiring an uninstall first.
 
-• Icon grid layout in home screen and dock
-• Widgets and folders
-• Selected icon pack
+What's new:
 
-To access this feature, open Home settings, tap the three-dots at the top right, and select "Restore Nova backup".
+• Folder padding: when the folder name is hidden, spacing is now equal
+  on all sides (top no longer has extra space)
 
-Alongside that, this release contains miscellaneous bug fixes and performance improvements.
+• Icon vertical position: a new slider in Home Screen settings lets you
+  adjust the vertical position of icons within their cell. Only visible
+  when app labels are hidden.
 
-[Donate on Open Collective](https://opencollective.com/lawnchair)
+• Icon picker: suggested icons now appear at the top of the icon picker,
+  showing any icons from your installed icon packs that match the app.
+  No more manually searching each pack.
 
-Full changelog: https://github.com/LawnchairLauncher/lawnchair/compare/v15.0.0-beta2.1...v15.0.0-beta3
+• Icon override reliability: changing an app's icon now updates
+  immediately on the home screen, app drawer, and customize tray.
+
+• Search bar: the pill background now stays visible while scrolling
+  through the app drawer and while typing. The search bar no longer
+  widens when tapped.
