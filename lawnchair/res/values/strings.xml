@@ -572,6 +572,7 @@
     <string name="restore_backup">Restore backup</string>
     <string name="what_to_restore">What to restore</string>
     <string name="backup_restore_success">Backup restored</string>
+    <string name="backup_restore_restart_message">Restart Lawnchair to apply the backup.</string>
     <string name="backup_restore_error">Failed to restore backup</string>
     <string name="invalid_backup_file">Invalid backup file</string>
 

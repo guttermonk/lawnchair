@@ -18,7 +18,6 @@ import com.android.launcher3.LauncherAppState
 import com.android.launcher3.LauncherFiles
 import com.android.launcher3.R
 import com.android.launcher3.model.DeviceGridState
-import com.android.launcher3.model.ModelDbController
 import com.android.launcher3.provider.RestoreDbTask
 import com.google.protobuf.Timestamp
 import java.io.File
@@ -81,8 +80,10 @@ class LawnchairBackup(
         DeviceGridState(info.gridState).writeToPrefs(context, true)
         readZip(handlers)
 
-        var dbController = ModelDbController(context)
-        RestoreDbTask.performRestore(context, dbController)
+        // Mark restore pending AFTER zip extraction so the restored prefs file doesn't
+        // overwrite this flag. On next launch, ModelDbController will rename restored.db
+        // and run performRestore with a clean process state.
+        RestoreDbTask.setPending(context)
     }
 
     private suspend fun readZip(handlers: Map<String, suspend (InputStream) -> Unit>) {
