@@ -22,3 +22,7 @@ What's new:
 • Search bar: the pill background now stays visible while scrolling
   through the app drawer and while typing. The search bar no longer
   widens when tapped.
+
+• Backup restore: fixed an issue requiring the backup to be restored
+  twice before taking effect. A restart prompt now appears after the
+  restore completes.
