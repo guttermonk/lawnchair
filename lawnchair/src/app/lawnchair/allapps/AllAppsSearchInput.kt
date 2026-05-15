@@ -195,21 +195,17 @@ class AllAppsSearchInput(context: Context, attrs: AttributeSet?) :
                     searchAlgorithm?.doZeroStateSearch(this)
                 }
 
-                setBackgroundVisibility(false, 0f)
                 animateHintVisibility(true)
-                animatePadding(currentPaddingLeft / 2, currentPaddingRight / 2)
 
                 // Sometimes the user has to click the input bar one more time
                 // for the keyboard to show.
             } else {
-                setBackgroundVisibility(true, 1f)
                 animateHintVisibility(false)
                 if (prefs.searchResulRecentSuggestion.get()) {
                     val query = editText.text.toString()
                     suggestionsRecent.saveRecentQuery(query, null)
                 }
 
-                animatePadding(currentPaddingLeft, currentPaddingRight)
                 focusedResultTitle = ""
                 input.setHint("")
                 hint.text = ""
