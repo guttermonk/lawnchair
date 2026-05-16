@@ -26,3 +26,6 @@ What's new:
 • Backup restore: fixed an issue requiring the backup to be restored
   twice before taking effect. A restart prompt now appears after the
   restore completes.
+
+• Crash fix: fixed a crash on Android 14 that could occur after
+  restoring from a backup.
