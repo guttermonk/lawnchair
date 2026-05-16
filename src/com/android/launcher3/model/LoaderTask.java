@@ -241,6 +241,7 @@ public class LoaderTask implements Runnable {
                 "disable_launcher_broadcast_installed_apps",
                 /* default */ 0);
         boolean shouldAttachArchivingExtras = mIsRestoreFromBackup
+                && mInstallingPkgsCached != null
                 && disableArchivingLauncherBroadcast == 0
                 && Flags.enableFirstScreenBroadcastArchivingExtras();
         if (shouldAttachArchivingExtras) {
