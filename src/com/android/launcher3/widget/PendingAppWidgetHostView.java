@@ -142,12 +142,24 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     public PendingAppWidgetHostView(
             Context context, LauncherWidgetHolder widgetHolder,
             int appWidgetId, @NonNull LauncherAppWidgetProviderInfo appWidget) {
+        this(context, widgetHolder, appWidgetId, appWidget, null);
+    }
+
+    public PendingAppWidgetHostView(
+            Context context, LauncherWidgetHolder widgetHolder,
+            int appWidgetId, @NonNull LauncherAppWidgetProviderInfo appWidget,
+            @Nullable Bitmap cachedSnapshot) {
         this(context, widgetHolder, new LauncherAppWidgetInfo(appWidgetId, appWidget.provider),
-                appWidget, appWidget.label, null);
-        getBackground().mutate().setAlpha(DEFERRED_ALPHA);
+                appWidget, appWidget.label, cachedSnapshot);
+        if (cachedSnapshot == null) {
+            getBackground().mutate().setAlpha(DEFERRED_ALPHA);
+        } else {
+            // Show the snapshot as-is, with no dimming
+            setBackgroundResource(0);
+        }
 
         mCenterDrawable = new ColorDrawable(Color.TRANSPARENT);
-        mDragFlags = FLAG_DRAW_LABEL;
+        mDragFlags = cachedSnapshot != null ? 0 : FLAG_DRAW_LABEL;
         mDrawableSizeChanged = true;
         mIsDeferredWidget = true;
     }
@@ -452,7 +464,8 @@ public class PendingAppWidgetHostView extends LauncherAppWidgetHostView
     @Override
     protected void onDraw(Canvas canvas) {
         if (mPreviewBitmap != null
-                && (mInfo.restoreStatus & LauncherAppWidgetInfo.FLAG_UI_NOT_READY) != 0) {
+                && (mIsDeferredWidget
+                    || (mInfo.restoreStatus & LauncherAppWidgetInfo.FLAG_UI_NOT_READY) != 0)) {
             mPreviewBitmapRect.set(0, 0, mPreviewBitmap.getWidth(), mPreviewBitmap.getHeight());
             mCanvasRect.set(0, 0, getWidth(), getHeight());
 

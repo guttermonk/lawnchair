@@ -31,7 +31,10 @@ import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.util.SparseArray;
@@ -86,6 +89,9 @@ public class LauncherWidgetHolder {
     private static final int FLAGS_SHOULD_LISTEN =
             FLAG_STATE_IS_NORMAL | FLAG_ACTIVITY_STARTED | FLAG_ACTIVITY_RESUMED;
 
+    /** Delay before actually stopping widget listening after activity stops */
+    private static final long STOP_LISTENING_DELAY_MS = 120_000; // 2 minutes
+
     // TODO(b/191735836): Replace with ActivityOptions.KEY_SPLASH_SCREEN_STYLE when un-hidden
     private static final String KEY_SPLASH_SCREEN_STYLE = "android.activity.splashScreenStyle";
     // TODO(b/191735836): Replace with SplashScreen.SPLASH_SCREEN_STYLE_EMPTY when un-hidden
@@ -104,6 +110,13 @@ public class LauncherWidgetHolder {
     final List<ProviderChangedListener> mProviderChangedListeners = new ArrayList<>();
 
     protected AtomicInteger mFlags = new AtomicInteger(FLAG_STATE_IS_NORMAL);
+
+    private final Handler mStopHandler = new Handler(Looper.getMainLooper());
+    @Nullable
+    private Runnable mPendingStopRunnable;
+
+    @NonNull
+    protected final SparseArray<Bitmap> mWidgetSnapshots = new SparseArray<>();
 
     @Nullable
     private Consumer<LauncherAppWidgetHostView> mOnViewCreationCallback;
@@ -163,6 +176,7 @@ public class LauncherWidgetHolder {
                 pv.reInflate();
             }
         }
+        mWidgetSnapshots.clear();
     }
 
     /**
@@ -200,6 +214,8 @@ public class LauncherWidgetHolder {
      * Called when the launcher is destroyed
      */
     public void destroy() {
+        cancelDelayedStop();
+        mWidgetSnapshots.clear();
         try {
             MAIN_EXECUTOR.submit(() -> {
                 clearViews();
@@ -486,8 +502,10 @@ public class LauncherWidgetHolder {
         if ((mFlags.get() & FLAG_LISTENING) == 0) {
             // Since the launcher hasn't started listening to widget updates, we can't simply call
             // host.createView here because the later will make a binder call to retrieve
-            // RemoteViews from system process.
-            return new PendingAppWidgetHostView(mContext, this, appWidgetId, appWidget);
+            // RemoteViews from system process. Use a cached snapshot if available.
+            Bitmap snapshot = mWidgetSnapshots.get(appWidgetId);
+            return new PendingAppWidgetHostView(
+                    mContext, this, appWidgetId, appWidget, snapshot);
         } else {
             if (enableWorkspaceInflation() && Looper.myLooper() != Looper.getMainLooper()) {
                 // Widget is being inflated a background thread, just create and
@@ -548,14 +566,88 @@ public class LauncherWidgetHolder {
             mFlags.updateAndGet(old -> old & ~flag);
         }
 
+        // Cancel any pending delayed stop when the activity starts again
+        if (on && flag == FLAG_ACTIVITY_STARTED) {
+            cancelDelayedStop();
+        }
+
         final boolean listening = isListening();
         int currentFlag = mFlags.get();
         if (!listening && shouldListen(currentFlag)) {
             // Postpone starting listening until all flags are on.
             startListening();
         } else if (listening && (currentFlag & FLAG_ACTIVITY_STARTED) == 0) {
-            // Postpone stopping listening until the activity is stopped.
+            // Capture widget snapshots while views are still valid
+            captureWidgetSnapshots();
+            // Delay stopping to avoid unnecessary stop/start cycles during brief app switches
+            scheduleDelayedStop();
+        }
+    }
+
+    /**
+     * Schedules a delayed stop-listening. If the activity restarts before the delay expires,
+     * the stop is cancelled and widgets remain connected with no visual interruption.
+     */
+    private void scheduleDelayedStop() {
+        if (mPendingStopRunnable != null) {
+            return; // Already scheduled
+        }
+        mPendingStopRunnable = () -> {
+            mPendingStopRunnable = null;
+            if ((mFlags.get() & FLAG_ACTIVITY_STARTED) == 0 && isListening()) {
+                stopListening();
+            }
+        };
+        mStopHandler.postDelayed(mPendingStopRunnable, getStopListeningDelay());
+    }
+
+    /**
+     * Returns the delay before stopping widget listening. Subclasses can override.
+     */
+    protected long getStopListeningDelay() {
+        return STOP_LISTENING_DELAY_MS;
+    }
+
+    /**
+     * Cancels any pending delayed stop-listening.
+     */
+    protected void cancelDelayedStop() {
+        if (mPendingStopRunnable != null) {
+            mStopHandler.removeCallbacks(mPendingStopRunnable);
+            mPendingStopRunnable = null;
+        }
+    }
+
+    /**
+     * Forces an immediate stop if currently delayed. Called on screen off or destroy.
+     */
+    protected void forceStopListeningNow() {
+        cancelDelayedStop();
+        if (isListening() && (mFlags.get() & FLAG_ACTIVITY_STARTED) == 0) {
             stopListening();
+        }
+    }
+
+    /**
+     * Captures bitmap snapshots of all active widget views. These are displayed as
+     * placeholders if the widgets need to be recreated before listening resumes.
+     */
+    protected void captureWidgetSnapshots() {
+        mWidgetSnapshots.clear();
+        for (int i = mViews.size() - 1; i >= 0; i--) {
+            LauncherAppWidgetHostView view = mViews.valueAt(i);
+            if (view != null && !(view instanceof PendingAppWidgetHostView)
+                    && view.getWidth() > 0 && view.getHeight() > 0) {
+                try {
+                    Bitmap bitmap = Bitmap.createBitmap(
+                            view.getWidth(), view.getHeight(), Bitmap.Config.ARGB_8888);
+                    Canvas canvas = new Canvas(bitmap);
+                    view.draw(canvas);
+                    mWidgetSnapshots.put(mViews.keyAt(i), bitmap);
+                } catch (Exception e) {
+                    Log.w(TAG, "Failed to capture widget snapshot", e);
+                }
+            }
         }
     }
 
