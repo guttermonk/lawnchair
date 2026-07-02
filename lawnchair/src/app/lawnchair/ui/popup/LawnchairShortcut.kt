@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
 import android.content.pm.SuspendDialogInfo
 import android.net.Uri
 import android.os.UserHandle
@@ -23,6 +24,7 @@ import app.lawnchair.preferences2.PreferenceManager2
 import app.lawnchair.views.ComposeBottomSheet
 import com.android.launcher3.AbstractFloatingView
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_APPLICATION
+import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_DEEP_SHORTCUT
 import com.android.launcher3.LauncherSettings.Favorites.ITEM_TYPE_TASK
 import com.android.launcher3.R
 import com.android.launcher3.Utilities
@@ -30,6 +32,7 @@ import com.android.launcher3.icons.BitmapInfo
 import com.android.launcher3.model.data.AppInfo as ModelAppInfo
 import com.android.launcher3.model.data.ItemInfo
 import com.android.launcher3.popup.SystemShortcut
+import com.android.launcher3.shortcuts.ShortcutKey
 import com.android.launcher3.util.ApplicationInfoWrapper
 import com.android.launcher3.util.ComponentKey
 import com.android.launcher3.views.ActivityContext
@@ -45,15 +48,21 @@ class LawnchairShortcut {
                 if (PreferenceManager2.getInstance(activity).lockHomeScreen.firstBlocking()) {
                     null
                 } else {
-                    getAppInfo(activity, itemInfo)?.let { Customize(activity, it, itemInfo, originalView) }
+                    val target = resolveCustomizeTarget(activity, itemInfo) ?: return@Factory null
+                    Customize(activity, target, itemInfo, originalView)
                 }
             }
 
-        private fun getAppInfo(launcher: LawnchairLauncher, itemInfo: ItemInfo): ModelAppInfo? {
-            if (itemInfo is ModelAppInfo) return itemInfo
-            if (itemInfo.itemType != ITEM_TYPE_APPLICATION) return null
-            val key = ComponentKey(itemInfo.targetComponent, itemInfo.user)
-            return launcher.appsView.appsStore.getApp(key)
+        private fun resolveCustomizeTarget(launcher: LawnchairLauncher, itemInfo: ItemInfo): ComponentKey? {
+            if (itemInfo is ModelAppInfo) return itemInfo.toComponentKey()
+            if (itemInfo.itemType == ITEM_TYPE_APPLICATION) {
+                val cmp = itemInfo.targetComponent ?: return null
+                return ComponentKey(cmp, itemInfo.user)
+            }
+            if (itemInfo.itemType == ITEM_TYPE_DEEP_SHORTCUT && itemInfo.getIntent() != null) {
+                return ShortcutKey.fromItemInfo(itemInfo)
+            }
+            return null
         }
 
         val UNINSTALL =
@@ -91,22 +100,25 @@ class LawnchairShortcut {
 
     class Customize(
         private val launcher: LawnchairLauncher,
-        private val appInfo: ModelAppInfo,
+        private val componentKey: ComponentKey,
         itemInfo: ItemInfo,
         originalView: View,
     ) : SystemShortcut<LawnchairLauncher>(R.drawable.ic_edit, R.string.action_customize, launcher, itemInfo, originalView) {
 
         override fun onClick(v: View) {
             val outObj = Array<Any?>(1) { null }
-            var icon = Utilities.loadFullDrawableWithoutTheme(launcher, appInfo, 0, 0, outObj)
+            val icon = Utilities.loadFullDrawableWithoutTheme(launcher, mItemInfo, 0, 0, outObj)
             if (mItemInfo.screenId != NO_ID && icon is BitmapInfo.Extender) {
                 // Lawnchair-TODO-BubbleTea: Fix getThemedDrawable
                 // icon = icon.getThemedDrawable(launcher)
             }
-            val launcherActivityInfo = outObj[0] as LauncherActivityInfo?
-            if (launcherActivityInfo != null) {
-                val defaultTitle = launcherActivityInfo.label.toString()
+            val defaultTitle = when (val obj = outObj[0]) {
+                is LauncherActivityInfo -> obj.label?.toString()
+                is ShortcutInfo -> (obj.longLabel ?: obj.shortLabel)?.toString()
+                else -> null
+            } ?: mItemInfo.title?.toString()
 
+            if (icon != null && defaultTitle != null) {
                 AbstractFloatingView.closeAllOpenViews(launcher)
                 ComposeBottomSheet.show(
                     context = launcher,
@@ -115,7 +127,7 @@ class LawnchairShortcut {
                     CustomizeAppDialog(
                         icon = icon,
                         defaultTitle = defaultTitle,
-                        componentKey = appInfo.toComponentKey(),
+                        componentKey = componentKey,
                     ) { close(true) }
                 }
             } else {

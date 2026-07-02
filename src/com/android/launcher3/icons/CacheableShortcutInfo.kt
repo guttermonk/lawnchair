@@ -24,6 +24,8 @@ import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import android.os.UserHandle
 import android.util.Log
+import app.lawnchair.data.iconoverride.IconOverrideRepository
+import app.lawnchair.icons.iconpack.IconPackProvider
 import com.android.launcher3.LauncherAppState
 import com.android.launcher3.icons.BaseIconFactory.IconOptions
 import com.android.launcher3.icons.cache.BaseIconCache
@@ -51,6 +53,10 @@ class CacheableShortcutInfo(val shortcutInfo: ShortcutInfo, val appInfo: Applica
          */
         @JvmStatic
         fun getIcon(context: Context, shortcutInfo: ShortcutInfo, density: Int): Drawable? {
+            val overrideDrawable = getUserOverrideDrawable(context, shortcutInfo, density)
+            if (overrideDrawable != null) {
+                return overrideDrawable
+            }
             if (!true) {
                 return null
             }
@@ -61,6 +67,26 @@ class CacheableShortcutInfo(val shortcutInfo: ShortcutInfo, val appInfo: Applica
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to get shortcut icon", e)
                 return null
+            }
+        }
+
+        private fun getUserOverrideDrawable(
+            context: Context,
+            shortcutInfo: ShortcutInfo,
+            density: Int,
+        ): Drawable? {
+            return try {
+                val key = ShortcutKey.fromInfo(shortcutInfo)
+                val item = IconOverrideRepository.INSTANCE.get(context).overridesMap[key]
+                    ?: return null
+                IconPackProvider.INSTANCE.get(context).getDrawable(
+                    item.toIconEntry(),
+                    density,
+                    shortcutInfo.userHandle,
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to resolve user icon override for shortcut", e)
+                null
             }
         }
 

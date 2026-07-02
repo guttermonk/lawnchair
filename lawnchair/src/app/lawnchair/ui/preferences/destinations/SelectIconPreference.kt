@@ -44,7 +44,14 @@ fun SelectIconPreference(componentKey: ComponentKey) {
         val launcherApps: LauncherApps = context.requireSystemService()
         val intent = Intent().setComponent(componentKey.componentName)
         val activity = launcherApps.resolveActivity(intent, componentKey.user)
-        activity.label.toString()
+        activity?.label?.toString() ?: run {
+            // Deep shortcuts encode the shortcut id as the class name and won't resolve to an activity.
+            // Fall back to the source app's label.
+            runCatching {
+                val ai = context.packageManager.getApplicationInfo(componentKey.componentName.packageName, 0)
+                context.packageManager.getApplicationLabel(ai).toString()
+            }.getOrDefault(componentKey.componentName.packageName)
+        }
     }
     val iconPacks by LocalPreferenceInteractor.current.iconPacks.collectAsStateWithLifecycle()
     val navController = LocalNavController.current

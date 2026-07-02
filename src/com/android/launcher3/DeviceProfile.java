@@ -1449,12 +1449,14 @@ public class DeviceProfile {
 
     private void updateFolderCellSize(float scale, Resources res) {
         int minLabelTextSize = pxFromSp(MIN_FOLDER_TEXT_SIZE_SP, mMetrics, scale);
+        final boolean hideFolderLabels = mTextFactors.getIconFolderTextSizeFactor() == 0f;
         if (mIsResponsiveGrid) {
             folderChildIconSizePx = mResponsiveWorkspaceCellSpec.getIconSize();
             folderChildTextSizePx = mResponsiveWorkspaceCellSpec.getIconTextSize();
             folderLabelTextSizePx = Math.max(minLabelTextSize,
                     (int) (folderChildTextSizePx * folderLabelTextScale));
             int textHeight = Utilities.calculateTextHeight(folderChildTextSizePx);
+            int maxTextLines = mResponsiveWorkspaceCellSpec.getIconTextMaxLineCount();
 
             folderCellWidthPx = mResponsiveFolderWidthSpec.getCellSizePx();
             folderCellHeightPx = mResponsiveFolderHeightSpec.getCellSizePx();
@@ -1465,6 +1467,15 @@ public class DeviceProfile {
                     mResponsiveFolderHeightSpec.getGutterPx());
 
             folderContentPaddingLeftRight = mResponsiveFolderWidthSpec.getStartPaddingPx();
+
+            if (hideFolderLabels) {
+                // Reclaim the reserved label area so vertical spacing matches horizontal spacing.
+                folderCellHeightPx = Math.max(folderChildIconSizePx,
+                        folderCellHeightPx - textHeight);
+                textHeight = 0;
+                folderChildTextSizePx = 0;
+                maxTextLines = 0;
+            }
 
             // Reduce icon width if it's wider than the expected folder cell width
             if (folderCellWidthPx < folderChildIconSizePx) {
@@ -1478,7 +1489,7 @@ public class DeviceProfile {
                     folderChildIconSizePx,
                     folderChildDrawablePaddingPx,
                     folderChildTextSizePx,
-                    mResponsiveWorkspaceCellSpec.getIconTextMaxLineCount());
+                    maxTextLines);
             cellContentDimensions.resizeToFitCellHeight(folderCellHeightPx, mIconSizeSteps);
             folderChildIconSizePx = cellContentDimensions.getIconSizePx();
             folderChildDrawablePaddingPx = cellContentDimensions.getIconDrawablePaddingPx();
@@ -1489,7 +1500,7 @@ public class DeviceProfile {
 
             folderLabelTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
             folderChildTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
-            if (mTextFactors.getIconFolderTextSizeFactor() == 0f) {
+            if (hideFolderLabels) {
                 folderFooterHeightPx = 0;
             }
             return;
@@ -1511,6 +1522,13 @@ public class DeviceProfile {
             } else {
                 folderCellWidthPx = roundPxValueFromFloat(folderCellWidthPx * scale);
                 folderCellHeightPx = roundPxValueFromFloat(folderCellHeightPx * scale);
+            }
+            if (hideFolderLabels) {
+                folderCellHeightPx = Math.max(folderChildIconSizePx,
+                        folderCellHeightPx - textHeight);
+                textHeight = 0;
+                folderChildTextSizePx = 0;
+                maxFolderChildTextLineCount = 0;
             }
             // Recalculating padding and cell height
             folderChildDrawablePaddingPx = getNormalizedFolderChildDrawablePaddingPx(textHeight);
@@ -1539,6 +1557,12 @@ public class DeviceProfile {
             int cellPaddingY = (int) (res.getDimensionPixelSize(R.dimen.folder_cell_y_padding)
                     * scale);
 
+            if (hideFolderLabels) {
+                textHeight = 0;
+                folderChildTextSizePx = 0;
+                maxFolderChildTextLineCount = 0;
+            }
+
             folderCellWidthPx = folderChildIconSizePx + 2 * cellPaddingX;
             folderCellHeightPx = folderChildIconSizePx + 2 * cellPaddingY + textHeight;
             folderContentPaddingTop = roundPxValueFromFloat(folderContentPaddingTop * scale);
@@ -1554,7 +1578,7 @@ public class DeviceProfile {
 
         folderLabelTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
         folderChildTextSizePx *= mTextFactors.getIconFolderTextSizeFactor();
-        if (mTextFactors.getIconFolderTextSizeFactor() == 0f) {
+        if (hideFolderLabels) {
             folderFooterHeightPx = 0;
         }
     }
