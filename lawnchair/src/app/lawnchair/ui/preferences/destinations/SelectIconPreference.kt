@@ -7,15 +7,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.lawnchair.data.iconoverride.IconOverrideRepository
@@ -38,7 +38,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun SelectIconPreference(componentKey: ComponentKey) {
+fun SelectIconPreference(
+    componentKey: ComponentKey,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val label = remember(componentKey) {
         val launcherApps: LauncherApps = context.requireSystemService()
@@ -97,7 +100,7 @@ fun SelectIconPreference(componentKey: ComponentKey) {
     val overrideItem by repo.observeTarget(componentKey).collectAsStateWithLifecycle(initialValue = null)
     val hasOverride = overrideItem != null
 
-    PreferenceLayoutLazyColumn(label = label) {
+    PreferenceLayoutLazyColumn(label = label, modifier = modifier) {
         if (hasOverride) {
             preferenceGroupItems(1, isFirstChild = true) {
                 ClickablePreference(
