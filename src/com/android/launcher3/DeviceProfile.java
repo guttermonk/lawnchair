@@ -1469,9 +1469,9 @@ public class DeviceProfile {
             folderContentPaddingLeftRight = mResponsiveFolderWidthSpec.getStartPaddingPx();
 
             if (hideFolderLabels) {
-                // Reclaim the reserved label area so vertical spacing matches horizontal spacing.
-                folderCellHeightPx = Math.max(folderChildIconSizePx,
-                        folderCellHeightPx - textHeight);
+                // Match cell height to cell width so vertical and horizontal spacing between
+                // icons are equal. The label area is no longer reserved when labels are hidden.
+                folderCellHeightPx = folderCellWidthPx;
                 textHeight = 0;
                 folderChildTextSizePx = 0;
                 maxTextLines = 0;
@@ -1524,8 +1524,9 @@ public class DeviceProfile {
                 folderCellHeightPx = roundPxValueFromFloat(folderCellHeightPx * scale);
             }
             if (hideFolderLabels) {
-                folderCellHeightPx = Math.max(folderChildIconSizePx,
-                        folderCellHeightPx - textHeight);
+                // Match cell height to cell width so vertical and horizontal spacing between
+                // icons are equal.
+                folderCellHeightPx = folderCellWidthPx;
                 textHeight = 0;
                 folderChildTextSizePx = 0;
                 maxFolderChildTextLineCount = 0;
@@ -1565,6 +1566,11 @@ public class DeviceProfile {
 
             folderCellWidthPx = folderChildIconSizePx + 2 * cellPaddingX;
             folderCellHeightPx = folderChildIconSizePx + 2 * cellPaddingY + textHeight;
+            if (hideFolderLabels) {
+                // Match cell height to cell width so vertical and horizontal spacing between
+                // icons are equal.
+                folderCellHeightPx = folderCellWidthPx;
+            }
             folderContentPaddingTop = roundPxValueFromFloat(folderContentPaddingTop * scale);
             folderContentPaddingLeftRight =
                     res.getDimensionPixelSize(R.dimen.folder_content_padding_left_right);
