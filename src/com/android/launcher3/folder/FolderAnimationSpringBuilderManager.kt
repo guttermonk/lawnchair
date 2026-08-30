@@ -43,6 +43,10 @@ class FolderAnimationSpringBuilderManager(
 ) : FolderAnimationCreator {
     override fun createAnimatorSet(isOpening: Boolean): AnimatorSet {
         resetLauncherScale(launcherDelegate.launcher?.workspace, launcherDelegate.launcher?.hotseat)
+        // Must run before any of the data below is built: getAnimationData and
+        // getIconAnimationDataList derive their scales from folderIcon.layoutRule and
+        // folderIcon.mBackground, both of which are only refreshed here.
+        folder.folderIcon.previewItemManager.recomputePreviewDrawingParams()
         val folderAnimData: FolderAnimationData = folder.getAnimationData(isOpening)
         val clipRevealData: ClipRevealData = folder.getClipRevealData(shapeDelegate, folderAnimData)
         val iconAnimData: List<IconAnimationData> = folder.getIconAnimationDataList(folderAnimData)

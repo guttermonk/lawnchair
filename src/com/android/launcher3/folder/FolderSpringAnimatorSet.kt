@@ -113,7 +113,9 @@ class FolderSpringAnimatorSet(val animatorSet: AnimatorSet) {
         }
 
         private fun setupFolder(folder: Folder, folderAnimationData: FolderAnimationData) {
-            folder.folderIcon.previewItemManager.recomputePreviewDrawingParams()
+            // recomputePreviewDrawingParams() is intentionally not called here: it has to run
+            // before folderAnimationData is built, so it lives in
+            // FolderAnimationSpringBuilderManager#createAnimatorSet instead.
             folder.apply {
                 pivotX = 0f
                 pivotY = 0f
