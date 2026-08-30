@@ -198,7 +198,13 @@ public class FolderPagedView extends PagedView<PageIndicatorDots> implements Cli
             for (int j = container.getChildCount() - 1; j >= 0; j--) {
                 View iconView = container.getChildAt(j);
                 iconView.setVisibility(View.VISIBLE);
-                if (iconView instanceof BubbleTextView) {
+                if (iconView instanceof BubbleTextView btv) {
+                    // Launching an app from a folder leaves its icon stay-pressed (see
+                    // Launcher#startActivitySafely), which keeps the FastBitmapDrawable at
+                    // PRESSED_SCALE. Closing the folder recycles the view before the deferred
+                    // clearPressedIconState() runs, so without this the next folder to open
+                    // shows an oversized icon. Matches BaseAllAppsAdapter (see issue #6575).
+                    btv.reset();
                     mViewCache.recycleView(R.layout.folder_application, iconView);
                 }
             }
