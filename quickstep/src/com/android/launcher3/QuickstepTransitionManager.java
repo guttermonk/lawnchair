@@ -2268,7 +2268,7 @@ public class QuickstepTransitionManager implements OnDeviceProfileChangeListener
             final DeviceProfile profile = mLauncher.getDeviceProfile();
             final int rotation = profile.getDeviceProperties().getRotationHint();
             final int widthPx = profile.getDeviceProperties().getWidthPx();
-            final int heightPx = profile.getDeviceProperties().getWidthPx();
+            final int heightPx = profile.getDeviceProperties().getHeightPx();
 
             final int rotationDelta = toLauncher
                     ? android.util.RotationUtils.deltaRotation(taskRotation, rotation)
